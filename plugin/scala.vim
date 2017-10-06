@@ -31,16 +31,18 @@ endfunction
 
 " Iterates over _all_ imports and puts them into 3 groups
 "
-" 1. Java/Scala imports like java.util.UUID
+" 1. Java imports like java.util.UUID
 " 2. Third party libraries
 " 3. First party libraries (ie. your own stuff)
+" 4. Scala imports
 "
 function! s:sortAcrossGroups()
   let curr = 1
   let first_line = -1
   let last_line = -1
   let trailing_newlines = 0
-  let java_scala_imports = []
+  let java_imports = []
+  let scala_imports = []
   let first_party_imports = []
   let third_party_imports = []
 
@@ -54,8 +56,10 @@ function! s:sortAcrossGroups()
         let first_line = curr
       endif
 
-      if line =~ '^import \(java\(x\)\?\|scala\)\.'
-        call add(java_scala_imports, line)
+      if line =~ '^import javax\?\.'
+        call add(java_imports, line)
+      elseif line =~ '^import scala\.'
+        call add(scala_imports, line)
       elseif exists('g:scala_first_party_namespaces')
         let regex = '^import '.g:scala_first_party_namespaces
         if line =~ regex
@@ -86,9 +90,10 @@ function! s:sortAcrossGroups()
     execute 'd'to_delete
   endif
 
+  call s:sortAndPrint(scala_imports)
   call s:sortAndPrint(first_party_imports)
   call s:sortAndPrint(third_party_imports)
-  call s:sortAndPrint(java_scala_imports)
+  call s:sortAndPrint(java_imports)
 
   if first_line != -1
     " remove extra blank line at top
